@@ -9,7 +9,7 @@ class User(Base):
     __tablename__ = "users"
     user_id = Column(Integer, primary_key=True, index=True)
     login_id = Column(String(30), unique=True, nullable=False)
-    username = Column(String(30), unique=True, index=True, nullable=False)
+    username = Column(String(30), unique=True, nullable=False)
     password = Column(String(128), nullable=False)
     notification = Column(Boolean, nullable=False, default=True)
 
