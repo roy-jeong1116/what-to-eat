@@ -33,4 +33,4 @@ class Category(Base):
     category_major_name = Column(String(30), nullable=False)
     category_sub_name = Column(String(30), nullable=False)
 
-    items = relationship("Item", back_populates="categpru", cascade="all, delete-orphan")
+    items = relationship("Item", back_populates="category", cascade="all, delete-orphan")
