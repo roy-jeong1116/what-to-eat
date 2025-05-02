@@ -1,53 +1,70 @@
 import os
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordRequestForm
-from jose import jwt
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from starlette import status
-from dotenv import load_dotenv
-from datetime import timedelta, datetime, timezone
+from auth import get_current_user
+from jwt_utils import create_access_token
 
 from database import get_db
+from models import User
 from domain.user import user_schema, user_crud
-from domain.user.user_crud import pwd_context
-
-load_dotenv()
-
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # JWT 토큰은 발급된 후 24시간 동안만 유효
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
+from domain.user.user_crud import pwd_context, delete_user, get_user_by_login_id
+from domain.user.user_schema import UserDelete, LoginRequest, Token
 
 router = APIRouter(
     prefix="/user",
 )
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
+
+# 회원가입
 @router.post("/create", status_code=status.HTTP_204_NO_CONTENT)
 def user_create(_user_create: user_schema.UserCreate, db: Session = Depends(get_db)):
-    user = user_crud.get_existing_user(db, user_create=_user_create)
-    if user:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="이미 존재하는 사용자입니다.")
+    username = user_crud.get_existing_username(db, user_create=_user_create)
+    login_id = user_crud.get_existing_login_id(db, user_create=_user_create)
+
+    if username:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="이미 존재하는 닉네임입니다.")
+
+    if login_id:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="이미 존재하는 아이디입니다.")
+
     user_crud.create_user(db, user_create=_user_create)
 
-@router.post("/login", response_model=user_schema.Token)
-def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = user_crud.get_user(db, form_data.username)
-    if not user or not pwd_context.verify(form_data.password, user.password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="로그인 정보를 확인하세요.",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+# 회원탈퇴
+@router.delete("/{user_id}/delete")
+def delete_my_account(
+        user_id: int,
+        form: UserDelete,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
 
-    # Payload
-    data = {
-        "sub": user.username,
-        "exp": datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    }
-    access_token = jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
+    if user_id != current_user.user_id:
+        raise HTTPException(status_code=403, detail="계정을 탈퇴할 권한이 없습니다.")
 
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "username": user.username,
-    }
+    try:
+        delete_user(db, user_id=user_id, password=form.password)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return {"detail": "회원 탈퇴가 완료되었습니다."}
+
+# 로그인
+@router.post("/login", response_model=Token)
+def login_for_access_token(
+        form_data: LoginRequest, db: Session = Depends(get_db)
+):
+    user = get_user_by_login_id(db, form_data.login_id)
+
+    if not user:
+        raise HTTPException(status_code=401, detail="사용자를 찾을 수 없습니다.")
+
+    if not pwd_context.verify(form_data.password, user.password):
+        raise HTTPException(status_code=401, detail="비밀번호가 잘못되었습니다.")
+
+    access_token = create_access_token(data={"sub": user.login_id})
+
+    return Token(access_token=access_token, token_type="bearer", login_id=user.login_id)
