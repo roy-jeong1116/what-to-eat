@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+
 from domain.item.item_schema import ItemCreate, ItemResponse, ItemDeleteRequest, ItemDeleteResponse
-from domain.item.item_crud import create_item, get_items_by_user, delete_items_by_user
+from domain.item.item_crud import create_item, get_items_by_user, delete_items_by_user, upsert_items
+
 from database import get_db
 from typing import List
 
@@ -9,13 +11,15 @@ router = APIRouter(
     prefix="/item",
 )
 
+# 재고 하나씩 추가
 @router.post("/create", response_model=ItemResponse)
 def create_new_item(
     item: ItemCreate,
+    user_id: int,
     db: Session = Depends(get_db)
 ):
     try:
-        return create_item(db, item)
+        return create_item(db, item,user_id)
     except Exception as e:
         raise HTTPException(
             status_code=400,
@@ -43,5 +47,11 @@ def delete_items_by_user_endpoint(
     # Pydantic으로 변환하여 응답
     return ItemDeleteResponse(deleted_items=deleted_items)
     
-
-    
+# 재고 항목 추가 (OCR 기반)
+@router.post("/upsert")
+def upsert_items_api(
+    items: list[ItemCreate], 
+    user_id: int,  # 프론트에서 user_id를 직접 넘기도록 설계
+    db: Session = Depends(get_db)
+):
+    return upsert_items(db, items, user_id)
