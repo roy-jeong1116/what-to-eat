@@ -1,12 +1,13 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, Field
 from datetime import date, datetime
 
 # Item 입력 스키마
 class ItemCreate(BaseModel):
-    user_id: int
+    # user_id: int
     item_name: str
     category_name: str
     expiry_date: date | None = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
     @field_validator("item_name", "category_name")
     @staticmethod
