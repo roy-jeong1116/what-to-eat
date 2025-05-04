@@ -13,8 +13,8 @@ load_dotenv()
 # access to the values within the .ini file in use.
 config = context.config
 
-SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
-config.set_main_option("sqlalchemy.url", SQLALCHEMY_DATABASE_URI)
+SQLALCHEMY_DATABASE_URL = os.getenv('SQLALCHEMY_DATABASE_URL')
+config.set_main_option("sqlalchemy.url", SQLALCHEMY_DATABASE_URL)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
