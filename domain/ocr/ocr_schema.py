@@ -1,51 +1,31 @@
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import List
 from datetime import date
 
-class BoundingBox(BaseModel):
-    """텍스트 영역의 좌표 정보"""
-    x: int
-    y: int
-    width: int
-    height: int
-
-class ReceiptItem(BaseModel):
-    """영수증 항목 모델"""
-    original_text: str
-    item_name: str
-    category_name: str
-    receipt_date: date
-    expiry_date: date
-    bounding_box: Optional[BoundingBox] = None
-
+# 1) OCR로 뽑아낸 원본 이름 목록
 class OCRExtractResponse(BaseModel):
-    """OCR 추출 응답"""
-    extracted_text: str
-    ocr_id: str
-    items: List[ReceiptItem]
-    receipt_date: date
-    detected_items_count: int  # 감지된 항목 수
-    missing_items_likely: bool  # 누락 항목 가능성
+    extracted_names: List[str]
 
-class NewItemRequest(BaseModel):
-    """누락된 항목 추가 요청 - 식재료명만 입력해도 LLM이 자동 추론"""
+# 2) 프론트에서 교정된 이름 리스트를 보낼 때
+class OCRClassifyRequest(BaseModel):
+    names: List[str]
+
+# 3) 분류 + 유통기한 텍스트를 담을 모델
+class OCRClassifyItem(BaseModel):
     item_name: str
-    category_name: Optional[str] = None  # 선택적 입력, 없으면 LLM이 추론
-    expiry_date: Optional[date] = None  # 선택적 입력, 없으면 LLM이 권장소비기한 계산
+    major_category: str
+    sub_category: str
+    expiry_text: str
 
-class FoodInfo(BaseModel):
-    """LLM이 반환하는 식품 정보"""
-    category: str
-    shelf_life_days: int
-    description: Optional[str] = None
+# 4) 분류 응답
+class OCRClassifyResponse(BaseModel):
+    items: List[OCRClassifyItem]
 
-class OCREditRequest(BaseModel):
-    """OCR 편집 요청"""
-    ocr_id: str
-    user_id: str
-    items: List[ReceiptItem]
+# 5) 최종 저장 요청: user_id + 분류된 아이템들
+class OCRSaveRequest(BaseModel):
+    user_id: int
+    items: List[OCRClassifyItem]
 
-class OCREditResponse(BaseModel):
-    """OCR 편집 응답"""
-    success: bool
-    item_ids: List[int]
+# 6) 저장 응답: 생성된 item_id 리스트
+class OCRSaveResponse(BaseModel):
+    saved_items: List[int]
