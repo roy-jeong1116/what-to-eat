@@ -12,6 +12,7 @@ class User(Base):
     username = Column(String(30), unique=True, nullable=False)
     password = Column(String(128), nullable=False)
     notification = Column(Boolean, nullable=False, default=True)
+    fcm_token = Column(String(255), nullable=True)  # 한 사용자당 하나의 디바이스 토큰
 
     items = relationship("Item", back_populates="user", cascade="all, delete-orphan")
 
