@@ -1,6 +1,6 @@
 import os
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from starlette import status
@@ -68,3 +68,64 @@ def login_for_access_token(
     access_token = create_access_token(data={"sub": user.login_id})
 
     return Token(access_token=access_token, token_type="bearer", login_id=user.login_id)
+
+# 유통기한 알림
+@router.post(
+    "/me/token",
+    summary="FCM 토큰 등록/업데이트",
+    description="클라이언트에서 전달한 FCM 토큰을 현재 로그인된 사용자에 저장합니다.",
+    status_code=status.HTTP_200_OK
+)
+def save_fcm_token(
+    token: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    # 사용자 설정에서 푸시 알림이 꺼져 있으면 에러
+    if not current_user.notification:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="알림이 비활성화된 사용자입니다."
+        )
+
+    # 토큰 저장
+    current_user.fcm_token = token
+    db.add(current_user)
+    db.commit()
+
+    return {"message": "FCM token saved successfully."}
+
+@router.patch(
+    "/me/notification",
+    summary="알림 켜기/끄기",
+    description="사용자가 알림을 켜거나 끕니다.",
+    status_code=status.HTTP_200_OK
+)
+def toggle_notification(
+    enabled: bool,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    current_user.notification = enabled
+    # 알림 끌 때는 토큰도 제거
+    if not enabled:
+        current_user.fcm_token = None
+    db.add(current_user)
+    db.commit()
+    return {"message": "Notification setting updated", "enabled": enabled}
+
+
+@router.delete(
+    "/me/token",
+    summary="FCM 토큰 삭제(구독 해제)",
+    description="사용자가 푸시 구독을 해제할 때 호출합니다.",
+    status_code=status.HTTP_200_OK
+)
+def delete_fcm_token(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    current_user.fcm_token = None
+    db.add(current_user)
+    db.commit()
+    return {"message": "FCM token removed"}
