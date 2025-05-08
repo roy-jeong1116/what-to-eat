@@ -19,5 +19,5 @@ def recommend_recipes(
     """
     사용자의 냉장고 재료와 요청에 기반해 레시피 추천
     """
-    result = recommend_recipes_from_fridge(db, current_user.id, user_request)
+    result = recommend_recipes_from_fridge(db, current_user.user_id, user_request)
     return {"result": result}
