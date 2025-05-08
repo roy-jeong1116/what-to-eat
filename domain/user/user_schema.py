@@ -31,6 +31,9 @@ class UserDelete(BaseModel):
             raise ValueError("비밀번호를 입력해야 합니다.")
         return v
 
+class UserResponse(BaseModel):
+    id: int
+
 class LoginRequest(BaseModel):
     login_id: str
     password: str
@@ -51,3 +54,4 @@ class Token(BaseModel):
     access_token: str
     token_type: str
     login_id: str
+    user_id: int
