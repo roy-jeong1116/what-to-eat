@@ -58,17 +58,17 @@ def extract_names_from_image(img_bytes: bytes) -> list[str]:
 def classify_names(names: list[str]) -> list[dict]:
     system = """
 너는 식재료 및 요리 전문가야.  
-아래의 네 가지 **대분류** 중 하나로 `major_category` 를,  
-각 대분류에 속하는 **소분류** 중 하나로 `sub_category` 를 정확히 매핑하고,  
+아래의 네 가지 **대분류** 중 하나로 `category_major_name` 를,  
+각 대분류에 속하는 **소분류** 중 하나로 `category_sub_name` 를 정확히 매핑하고,  
 유통기한은 "5일", "1주"처럼 `expiry_text` 에 텍스트로 제시해.  
 
-대분류 목록(major_category):
+대분류 목록(category_major_name):
   1. 곡물·채소·과일류
   2. 동물성 식재료
   3. 조미료·양념류
   4. 가공식품·저장식품
 
-소분류 목록(sub_category):
+소분류 목록(category_sub_name):
 1. 곡물·채소·과일류 
 → 곡류·서류(ex. 쌀, 현미, 보리, 잡곡, 밀가루, 감자, 고구마, 토란 등), 
 두류·견과(ex. 콩, 두부, 팥, 땅콩, 참깨, 호두 등), 
@@ -96,8 +96,8 @@ def classify_names(names: list[str]) -> list[dict]:
   [  
     {  
       "item_name": "사과",  
-      "major_category": "곡물·채소·과일류",  
-      "sub_category": "과일류",  
+      "category_major_name": "곡물·채소·과일류",  
+      "category_sub_name": "과일류",  
       "expiry_text": "1주"  
     },  
     …  
@@ -128,9 +128,9 @@ def classify_names(names: list[str]) -> list[dict]:
     for it in items:
         standardized.append({
             "item_name":      it.get("item_name")   or it.get("base_name"),
-            "major_category": it.get("major_category") or it.get("category"),
+            "category_major_name": it.get("category_major_name") or it.get("category"),
             # sub_category가 None일 경우 빈 문자열로
-            "sub_category":   it.get("sub_category") or "",
+            "category_sub_name":   it.get("category_sub_name") or "",
             "expiry_text":    it.get("expiry_text")  or it.get("shelf_life") or "",
         })
     return standardized
