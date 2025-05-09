@@ -7,9 +7,11 @@ from .ocr_schema import (
 from .ocr_service import (
     extract_names_from_image, classify_names, parse_expiry
 )
-from domain.item.item_crud import create_item
+from domain.item.item_crud import upsert_items
 from domain.item.item_schema import ItemCreate
 from database import get_db
+
+from fastapi import Path
 
 router = APIRouter(prefix="/ocr")
 
@@ -36,22 +38,25 @@ def save_items_endpoint(
     db: Session = Depends(get_db)
 ):
     saved_ids: list[int] = []
+    item_list = []
     for it in req.items:
         # 1) expiry_text → expiry_date 계산
         expiry_date = parse_expiry(it.expiry_text)
         # 2) ItemCreate 객체 준비
         item_in = ItemCreate(
-            user_id=req.user_id,
+            user_id=req.user_id, # Path로 받은 값 사용
             item_name=it.item_name,
-            category_major_name=it.major_category,
-            category_sub_name=it.sub_category,
+            category_major_name=it.category_major_name,
+            category_sub_name=it.category_sub_name,
             expiry_date=expiry_date
         )
-        # 3) DB 저장
-        try:
-            db_item = create_item(db, item_in)
-        except Exception as e:
-            raise HTTPException(500, f"Item 저장 실패: {e}")
-        saved_ids.append(db_item.item_id)
+        item_list.append(item_in)
+        
+    # 3) DB 저장
+    try:
+        update_items = upsert_items(db, item_list, req.user_id)
+    except Exception as e:
+        raise HTTPException(500, f"Item 저장 실패: {e}")
+    saved_ids = [itm.item_id for itm in update_items]
 
     return {"saved_items": saved_ids}

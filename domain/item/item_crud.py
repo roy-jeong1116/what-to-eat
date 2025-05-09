@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session, joinedload
 from domain.item.item_schema import ItemCreate
+from domain.ocr.ocr_service import parse_expiry
 from models import Item, Category
 from typing import List
 
@@ -84,18 +85,20 @@ def upsert_items(db: Session, items: List[ItemCreate], user_id: int):
     updated_items: List[Item] = []
 
     for item in items:
-       # 1) 카테고리 확보
+        # 1) 카테고리 확보
         cat = get_or_create_category(db, item.category_major_name, item.category_sub_name)
+
+        
 
         # 2) 기존 아이템 검색 (user_id+item_name+category_id)
         db_item = (
             db.query(Item)
-              .filter_by(
-                   user_id=user_id,
-                   item_name=item.item_name,
-                   category_id=cat.category_id
-              )
-              .first()
+                .filter_by(
+                    user_id=user_id,
+                    item_name=item.item_name,
+                    category_id=cat.category_id
+                )
+                .first()
         )
 
         if db_item:
@@ -110,10 +113,11 @@ def upsert_items(db: Session, items: List[ItemCreate], user_id: int):
             payload.pop("category_sub_name")
             payload["category_id"] = cat.category_id
             payload["user_id"] = user_id
+
             db_item = Item(**payload)
             db.add(db_item)
-
-        updated_items.append(db_item)
+        # 기존이든 신규이든 updated_items에 추가
+        updated_items.append(db_item)   
 
     db.commit()
     for item in updated_items:

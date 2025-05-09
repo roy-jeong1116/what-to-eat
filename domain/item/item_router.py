@@ -1,36 +1,26 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from domain.item.item_schema import ItemCreate, ItemResponse, ItemDeleteRequest, ItemDeleteResponse
-from domain.item.item_crud import create_item, get_items_by_user, delete_items_by_user, upsert_items
+from domain.item.item_schema import ItemCreate, ItemResponse, ItemDeleteRequest, ItemDeleteResponse, ItemUpsertRequest, ItemCreateInput
+from domain.item.item_crud import get_items_by_user, delete_items_by_user, upsert_items
+from domain.ocr.ocr_service import parse_expiry
 
 from database import get_db
 from typing import List
 
+from fastapi import Body
+
 router = APIRouter(
-    prefix="/item",
+    prefix="/users/{user_id}/item",
 )
 
-# 재고 하나씩 추가
-@router.post("/create", response_model=ItemResponse)
-def create_new_item(
-    item: ItemCreate,
-    db: Session = Depends(get_db)
-):
-    try:
-        return create_item(db, item)
-    except Exception as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Item creation failed: {str(e)}"
-        )
 
-@router.get("/users/{user_id}/items", response_model=List[ItemResponse])
+@router.get("/items", response_model=List[ItemResponse])
 def read_items_by_user(user_id: int, db: Session = Depends(get_db)) -> List[ItemResponse]:
     return get_items_by_user(db, user_id)
 
 @router.delete(
-    "/users/{user_id}/items",
+    "/items",
     response_model=ItemDeleteResponse,
     summary="Delete Items By User"
 )
@@ -50,12 +40,19 @@ def delete_items_by_user_endpoint(
 @router.post(
     "/upsert",
     response_model=List[ItemResponse],
-    summary="Upsert multiple items: update expiry if exists, else create"
+    # summary="Upsert multiple items: update expiry if exists, else create"
 )
-def upsert_items_api(
-    items: list[ItemCreate],
-    user_id: int = Query(..., description="User ID"),
-    db: Session = Depends(get_db)
-) -> List[ItemResponse]:
-    updated = upsert_items(db, items, user_id)
+def upsert_items_api(request: ItemUpsertRequest, db: Session = Depends(get_db)) -> List[ItemResponse]:
+    converted_items = []
+    for item in request.items:
+        expiry_date = parse_expiry(item.expiry_text)
+        converted_items.append(ItemCreate(
+            user_id=request.user_id,
+            item_name=item.item_name,
+            category_major_name=item.category_major_name,
+            category_sub_name=item.category_sub_name,
+            expiry_date=expiry_date
+        ))
+
+    updated = upsert_items(db, converted_items, request.user_id)
     return updated

@@ -13,8 +13,8 @@ class OCRClassifyRequest(BaseModel):
 # 3) 분류 + 유통기한 텍스트를 담을 모델
 class OCRClassifyItem(BaseModel):
     item_name: str
-    major_category: str
-    sub_category: str
+    category_major_name: str
+    category_sub_name: str
     expiry_text: str
 
 # 4) 분류 응답
