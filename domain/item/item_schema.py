@@ -1,6 +1,7 @@
 from pydantic import BaseModel, field_validator, Field
 from datetime import date, datetime
 from typing import List, Optional
+from domain.ocr.ocr_schema import OCRClassifyItem
 
 # Item 입력 스키마
 class ItemCreate(BaseModel):
@@ -14,19 +15,6 @@ class ItemCreate(BaseModel):
     # class Config:
     #     orm_mode = True
         
-    @field_validator("item_name")
-    @staticmethod
-    def not_empty(v: str) -> str:
-        if not v or not v.strip():
-            raise ValueError("빈 값은 허용되지 않습니다.")
-        return v
-# 직접 입력    
-class ItemCreateInput(BaseModel):
-    item_name: str
-    category_major_name: str
-    category_sub_name: str
-    expiry_text: str  # `expiry_text`를 입력받음
-
     @field_validator("item_name")
     @staticmethod
     def not_empty(v: str) -> str:
@@ -73,4 +61,4 @@ class ItemDeleteResponse(BaseModel):
 
 class ItemUpsertRequest(BaseModel):
     user_id: int
-    items: List[ItemCreate]
+    items: List[OCRClassifyItem]

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from domain.item.item_schema import ItemCreate, ItemResponse, ItemDeleteRequest, ItemDeleteResponse, ItemUpsertRequest, ItemCreateInput
+from domain.item.item_schema import ItemCreate, ItemResponse, ItemDeleteRequest, ItemDeleteResponse, ItemUpsertRequest
 from domain.item.item_crud import get_items_by_user, delete_items_by_user, upsert_items
 from domain.ocr.ocr_service import parse_expiry
 
