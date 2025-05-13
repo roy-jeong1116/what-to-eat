@@ -38,3 +38,6 @@ def delete_user(db: Session, user_id: int, password: str):
 
 def get_user_by_login_id(db: Session, login_id: str):
     return db.query(User).filter(User.login_id == login_id).first()
+
+def get_user_from_db(db: Session, user_id: int):
+    return db.query(User).filter(User.user_id == user_id).first()
