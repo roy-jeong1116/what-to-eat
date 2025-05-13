@@ -37,26 +37,23 @@ def save_items_endpoint(
     req: OCRSaveRequest,
     db: Session = Depends(get_db)
 ):
-    saved_ids: list[int] = []
-    item_list = []
+    # 1) OCR에서 받은 expiry_text → expiry_date 변환
+    item_list: list[ItemCreate] = []
     for it in req.items:
-        # 1) expiry_text → expiry_date 계산
         expiry_date = parse_expiry(it.expiry_text)
-        # 2) ItemCreate 객체 준비
-        item_in = ItemCreate(
-            user_id=req.user_id, # Path로 받은 값 사용
+        item_list.append(ItemCreate(
             item_name=it.item_name,
             category_major_name=it.category_major_name,
             category_sub_name=it.category_sub_name,
             expiry_date=expiry_date
-        )
-        item_list.append(item_in)
-        
-    # 3) DB 저장
+        ))
+
+    # 2) DB에 upsert (user_id는 upsert_items 함수에 전달)
     try:
-        update_items = upsert_items(db, item_list, req.user_id)
+        updated_items = upsert_items(db, item_list, req.user_id)
     except Exception as e:
         raise HTTPException(500, f"Item 저장 실패: {e}")
-    saved_ids = [itm.item_id for itm in update_items]
 
+    # 3) 저장된 아이템 ID 리스트 반환
+    saved_ids = [itm.item_id for itm in updated_items]
     return {"saved_items": saved_ids}
