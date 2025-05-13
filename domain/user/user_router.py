@@ -1,6 +1,6 @@
 import os
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from starlette import status
@@ -37,7 +37,7 @@ def user_create(_user_create: user_schema.UserCreate, db: Session = Depends(get_
 @router.delete("/{user_id}/delete")
 def delete_my_account(
         user_id: int,
-        form: UserDelete,
+        password: str = Body(..., embed=True),
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
@@ -46,7 +46,7 @@ def delete_my_account(
         raise HTTPException(status_code=403, detail="계정을 탈퇴할 권한이 없습니다.")
 
     try:
-        delete_user(db, user_id=user_id, password=form.password)
+        delete_user(db, user_id=user_id, password=password)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
