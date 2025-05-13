@@ -67,7 +67,7 @@ def login_for_access_token(
 
     access_token = create_access_token(data={"sub": str(user.user_id)})
 
-    return Token(access_token=access_token, token_type="bearer", login_id=user.login_id, user_id=user.user_id)
+    return Token(access_token=access_token, token_type="bearer", login_id=user.login_id, user_id=user.user_id, username=user.username)
 
 # 유통기한 알림
 @router.post(

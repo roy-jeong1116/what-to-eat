@@ -55,3 +55,4 @@ class Token(BaseModel):
     token_type: str
     login_id: str
     user_id: int
+    username: str
