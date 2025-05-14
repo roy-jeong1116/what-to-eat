@@ -41,3 +41,18 @@ def get_user_by_login_id(db: Session, login_id: str):
 
 def get_user_from_db(db: Session, user_id: int):
     return db.query(User).filter(User.user_id == user_id).first()
+
+def get_user_by_user_id(db: Session, user_id: int):
+    return db.query(User).filter(User.user_id == user_id).first()
+
+def get_user_by_username(db: Session, username: str):
+    return db.query(User).filter(User.username == username).first()
+
+def update_user_username(db: Session, user_id: int, new_username: str):
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if user:
+        user.username = new_username
+        db.commit()
+        db.refresh(user)
+
+    return user
