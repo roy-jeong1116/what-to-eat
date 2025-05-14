@@ -56,3 +56,11 @@ def update_user_username(db: Session, user_id: int, new_username: str):
         db.refresh(user)
 
     return user
+
+def update_user_password(db: Session, user_id: int, new_password: str):
+    user = get_user_by_user_id(db, user_id)
+    hashed_password = pwd_context.hash(new_password)
+    user.password = hashed_password
+
+    db.add(user)
+    db.commit()

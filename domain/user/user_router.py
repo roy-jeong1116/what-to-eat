@@ -11,8 +11,9 @@ from database import get_db
 from models import User
 from domain.user import user_schema, user_crud
 from domain.user.user_crud import pwd_context, delete_user
-from domain.user.user_crud import get_user_by_login_id, get_user_by_user_id, get_user_by_username, update_user_username
-from domain.user.user_schema import UserDelete, LoginRequest, Token, UpdateNicknameRequest
+from domain.user.user_crud import get_user_by_login_id, get_user_by_user_id, get_user_by_username
+from domain.user.user_crud import update_user_username, update_user_password
+from domain.user.user_schema import UserDelete, LoginRequest, Token, UpdateNicknameRequest, UpdatePasswordRequest
 
 router = APIRouter(
     prefix="/user",
@@ -146,3 +147,24 @@ async def update_username(user_id: int, request: UpdateNicknameRequest, db: Sess
 
     updated_username = update_user_username(db, user_id=user_id, new_username=request.new_username)
     return {"message": "닉네임이 성공적으로 변경되었습니다.", "username": updated_username}
+
+@router.patch("/{user_id}/password", status_code=status.HTTP_200_OK)
+async def update_password(
+        user_id: int,
+        request: UpdatePasswordRequest,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    if user_id != current_user.user_id:
+        raise HTTPException(status_code=403, detail="비밀번호를 변경할 권한이 없습니다.")
+
+    user = get_user_by_user_id(db, user_id=user_id)
+
+    if not user:
+        raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
+    if not pwd_context.verify(request.password, user.password):
+        raise HTTPException(status_code=400, detail="비밀번호를 확인하세요.")
+
+    update_user_password(db, user_id=user_id, new_password=request.new_password)
+
+    return {"message": "비밀번호가 성공적으로 변경되었습니다."}

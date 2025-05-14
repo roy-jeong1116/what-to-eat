@@ -60,3 +60,7 @@ class Token(BaseModel):
 class UpdateNicknameRequest(BaseModel):
     password: str
     new_username: str
+
+class UpdatePasswordRequest(BaseModel):
+    password: str
+    new_password: str
