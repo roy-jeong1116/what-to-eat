@@ -10,8 +10,9 @@ from jwt_utils import create_access_token
 from database import get_db
 from models import User
 from domain.user import user_schema, user_crud
-from domain.user.user_crud import pwd_context, delete_user, get_user_by_login_id
-from domain.user.user_schema import UserDelete, LoginRequest, Token
+from domain.user.user_crud import pwd_context, delete_user
+from domain.user.user_crud import get_user_by_login_id, get_user_by_user_id, get_user_by_username, update_user_username
+from domain.user.user_schema import UserDelete, LoginRequest, Token, UpdateNicknameRequest
 
 router = APIRouter(
     prefix="/user",
@@ -129,3 +130,19 @@ def delete_fcm_token(
     db.add(current_user)
     db.commit()
     return {"message": "FCM token removed"}
+
+@router.patch("/{user_id}/username")
+async def update_username(user_id: int, request: UpdateNicknameRequest, db: Session = Depends(get_db)):
+    user = get_user_by_user_id(db, user_id=user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
+
+    if not pwd_context.verify(request.password, user.password):
+        raise HTTPException(status_code=400, detail="비밀번호를 확인하세요.")
+
+    existing_user = get_user_by_username(db, username=request.new_username)
+    if existing_user:
+        raise HTTPException(status_code=400, detail="이미 사용 중인 닉네임입니다.")
+
+    updated_username = update_user_username(db, user_id=user_id, new_username=request.new_username)
+    return {"message": "닉네임이 성공적으로 변경되었습니다.", "username": updated_username}

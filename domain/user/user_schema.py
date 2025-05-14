@@ -56,3 +56,7 @@ class Token(BaseModel):
     login_id: str
     user_id: int
     username: str
+
+class UpdateNicknameRequest(BaseModel):
+    password: str
+    new_username: str
