@@ -47,9 +47,10 @@ def create_item(db: Session, item_create: ItemCreate):
     db.refresh(db_item)
     return db_item
 
-def get_items_by_user(db: Session, user_id: int) -> List[Item]:
+def get_items_by_user(db: Session, user_id: int) -> list[Item]:
     return (
         db.query(Item)
+          .options(joinedload(Item.category)) # Category 관계를 미리 로딩
           .filter(Item.user_id == user_id)
           .order_by(Item.created_at.desc())
           .all()

@@ -17,6 +17,8 @@ router = APIRouter(
 
 @router.get("/", response_model=List[ItemResponse])
 def read_items_by_user(user_id: int, db: Session = Depends(get_db)) -> List[ItemResponse]:
+    # get_items_by_user 에서 Category 관계가 이미 로드되므로
+    # Pydantic이 category_major_name/sub_name까지 직렬화해 줍니다.
     return get_items_by_user(db, user_id)
 
 @router.delete(
