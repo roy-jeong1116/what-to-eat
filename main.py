@@ -2,6 +2,8 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+from domain.category import category_router
 from notifications import notify_expiring_items
 from sqlalchemy.orm import Session
 
@@ -54,8 +56,9 @@ app.include_router(item_router.router,   tags=["Item"])
 app.include_router(ocr_router,           tags=["OCR"])
 app.include_router(chatbot_router, tags=["RecipeChatbot"])
 app.include_router(qa_router.router)
+app.include_router(category_router.router)
 
-@app.get("/{user_id}/mypage", tags=["MyPage"])
+@app.get("/mypage/{user_id}", tags=["MyPage"])
 async def get_mypage(user_id: int, db: Session = Depends(get_db)):
     user = user_crud.get_user_from_db(db, user_id)
     if not user:

@@ -40,6 +40,7 @@ def create_item(db: Session, item_create: ItemCreate):
     payload.pop("category_major_name")
     payload.pop("category_sub_name")
     payload["category_id"] = cat.category_id
+
     db_item = Item(**payload)
     db.add(db_item)
     db.commit()
@@ -87,8 +88,6 @@ def upsert_items(db: Session, items: List[ItemCreate], user_id: int):
     for item in items:
         # 1) 카테고리 확보
         cat = get_or_create_category(db, item.category_major_name, item.category_sub_name)
-
-        
 
         # 2) 기존 아이템 검색 (user_id+item_name+category_id)
         db_item = (

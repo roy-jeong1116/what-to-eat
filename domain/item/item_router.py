@@ -11,16 +11,16 @@ from typing import List
 from fastapi import Body
 
 router = APIRouter(
-    prefix="/users/{user_id}/item",
+    prefix="/item/{user_id}",
 )
 
 
-@router.get("/items", response_model=List[ItemResponse])
+@router.get("/", response_model=List[ItemResponse])
 def read_items_by_user(user_id: int, db: Session = Depends(get_db)) -> List[ItemResponse]:
     return get_items_by_user(db, user_id)
 
 @router.delete(
-    "/items",
+    "/delete",
     response_model=ItemDeleteResponse,
     summary="Delete Items By User"
 )
