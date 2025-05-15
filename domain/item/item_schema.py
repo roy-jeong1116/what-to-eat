@@ -73,13 +73,23 @@ class ItemDeleteResponse(BaseModel):
     class Config:
         orm_mode = True
 
+# ----------------------------
+# 5) OCR 기반 업서트 스키마
+# ----------------------------
+
+class OCRUpsertItem(BaseModel):
+    item_name: str
+    category_major_name: str
+    category_sub_name: str
+    expiry_text: str
+    expiry_date: Optional[date] = None   # <— allow explicit override
 
 # ----------------------------
-# 5) OCR 기반 업서트 요청 스키마
+# 6) OCR 기반 업서트 요청 스키마
 # ----------------------------
 class ItemUpsertRequest(BaseModel):
     user_id: int
-    items: List[OCRClassifyItem]
+    items: list[OCRUpsertItem]
 
     class Config:
         orm_mode = True

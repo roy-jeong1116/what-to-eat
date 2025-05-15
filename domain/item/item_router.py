@@ -39,22 +39,22 @@ def delete_items_by_user_endpoint(
     return ItemDeleteResponse(deleted_items=deleted_items)
     
 # 재고 항목 업서트 (OCR 기반)
-@router.post(
-    "/upsert",
-    response_model=List[ItemResponse],
-    # summary="Upsert multiple items: update expiry if exists, else create"
-)
-def upsert_items_api(request: ItemUpsertRequest, db: Session = Depends(get_db)) -> List[ItemResponse]:
-    converted_items = []
-    for item in request.items:
-        expiry_date = parse_expiry(item.expiry_text)
-        converted_items.append(ItemCreate(
-            user_id=request.user_id,
-            item_name=item.item_name,
-            category_major_name=item.category_major_name,
-            category_sub_name=item.category_sub_name,
-            expiry_date=expiry_date
+@router.post("/upsert", response_model=list[ItemResponse])
+def upsert_items_api(req: ItemUpsertRequest, db: Session = Depends(get_db)):
+    converted: list[ItemCreate] = []
+    for it in req.items:
+        # if the frontend gave us expiry_date, honor it:
+        expiry = it.expiry_date
+        if expiry is None and it.expiry_text:
+            # fallback to old parse
+            from domain.ocr.ocr_service import parse_expiry
+            expiry = parse_expiry(it.expiry_text)
+        converted.append(ItemCreate(
+            user_id             = req.user_id,
+            item_name           = it.item_name,
+            category_major_name = it.category_major_name,
+            category_sub_name   = it.category_sub_name,
+            expiry_date         = expiry
         ))
-
-    updated = upsert_items(db, converted_items, request.user_id)
+    updated = upsert_items(db, converted, req.user_id)
     return updated

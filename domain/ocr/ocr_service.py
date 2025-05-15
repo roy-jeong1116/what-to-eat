@@ -1,3 +1,5 @@
+# src/domain/ocr/ocr_service.py
+
 import json
 import base64
 import openai
@@ -119,36 +121,37 @@ def classify_names(names: list[str]) -> list[dict]:
     )
 
     raw = resp.choices[0].message.content or ""
-    # ```code fences``` 제거
     payload = _strip_code_fence(raw).strip()
     try:
         items = json.loads(payload)
     except json.JSONDecodeError:
         raise RuntimeError(f"분류 JSON 파싱 실패:\n{payload}")
 
-    # 모델이 "category"/"shelf_life"로 내려줄 수 있으므로
-    # Pydantic 스키마에 맞게 키 이름을 통일해 줍니다.
     standardized = []
     for it in items:
         standardized.append({
-            "item_name":      it.get("item_name")   or it.get("base_name"),
+            "item_name":           it.get("item_name")   or it.get("base_name"),
             "category_major_name": it.get("category_major_name") or it.get("category"),
-            # sub_category가 None일 경우 빈 문자열로
-            "category_sub_name":   it.get("category_sub_name") or "",
-            "expiry_text":    it.get("expiry_text")  or it.get("shelf_life") or "",
+            "category_sub_name":   it.get("category_sub_name")   or "",
+            "expiry_text":         it.get("expiry_text")        or it.get("shelf_life") or "",
         })
     return standardized
 
 def parse_expiry(expiry_text: str) -> date | None:
     """
-    expiry_text가 "무기한"이면 None을 반환 (DB에는 NULL로 저장)
-    그렇지 않으면 n일 후 날짜를 반환
+    - "YYYY-MM-DD" (수동 수정된 ISO 포맷)인 경우 그대로 파싱해서 리턴
+    - "무기한"이면 None 반환
+    - 그 외에는 숫자만 뽑아 n일 후 날짜 계산 후 반환
     """
-    today = date.today()
+    # 1) 사용자가 직접 date input에서 고친 "yyyy-MM-dd" 그대로 전달된 경우
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", expiry_text):
+        return datetime.strptime(expiry_text, "%Y-%m-%d").date()
+
+    # 2) 무기한
     if expiry_text == "무기한":
         return None
 
-    # 텍스트에서 숫자만 뽑아 int로 변환
+    # 3) "30일", "7일" 같은 형식: 숫자만 뽑아서 n일 후
+    today = date.today()
     num = int(''.join(filter(str.isdigit, expiry_text)) or 0)
     return today + timedelta(days=num)
-
