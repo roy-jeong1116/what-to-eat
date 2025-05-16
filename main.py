@@ -14,7 +14,6 @@ from domain.user import user_crud
 from domain.item import item_router
 from domain.qa import qa_router
 from domain.ocr.ocr_router import router as ocr_router
-from domain.recipe_chatbot.chatbot_router import router as chatbot_router
 
 # 1) 스케줄러 인스턴스 생성
 scheduler = AsyncIOScheduler()
@@ -44,17 +43,14 @@ app.add_middleware(
     allow_methods=["*"],        # GET, POST, PUT, DELETE 등 모든 HTTP 메서드 허용
     allow_headers=["*"],        # 모든 요청 헤더 허용
     expose_headers=["*"],       # 클라이언트에게 노출할 응답 헤더 허용
+    # expose_headers=["Authorization"] 
 )
 
 
-# chatbot_router 안의 모든 엔드포인트를 OpenAPI 스키마에서 제외
-for route in chatbot_router.routes:
-    route.include_in_schema = False
 
 app.include_router(user_router.router,   tags=["User"])
 app.include_router(item_router.router,   tags=["Item"])
 app.include_router(ocr_router,           tags=["OCR"])
-app.include_router(chatbot_router, tags=["RecipeChatbot"])
 app.include_router(qa_router.router)
 app.include_router(category_router.router)
 

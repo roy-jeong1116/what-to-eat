@@ -10,7 +10,7 @@ router = APIRouter(
     tags=["QA / Recipe"]
 )
 
-@router.get("/recommend-recipes")
+@router.get("/{user_id}/recommend-recipes")
 def recommend_recipes(
     user_request: str = Query(..., description="예: 맵지 않은 요리, 간단한 도시락, 아이가 좋아할만한 반찬 등"),
     db: Session = Depends(get_db),
