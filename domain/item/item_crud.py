@@ -76,6 +76,9 @@ def delete_items_by_user(db: Session, user_id: int, item_ids: List[int]) -> List
     for item in to_delete:
         db.delete(item)
 
+    #디비 업데이트
+    db.commit()
+
 # ocr 재고 추가
 def upsert_items(db: Session, items: List[ItemCreate], user_id: int):
     """

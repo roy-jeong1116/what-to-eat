@@ -28,12 +28,14 @@ def read_items_by_user(user_id: int, db: Session = Depends(get_db)) -> List[Item
 )
 def delete_items_by_user_endpoint(
     user_id: int,
-    req: ItemDeleteRequest,
+    req: ItemDeleteRequest = Body(...),
     db: Session = Depends(get_db)
 ) -> ItemDeleteResponse:
     deleted_items = delete_items_by_user(db, user_id, req.item_ids)
-    if not deleted_items:
-        raise HTTPException(status_code=404, detail="삭제할 항목이 없습니다.")
+
+    # deleted_items가 None일 경우 빈 리스트로 처리
+    if deleted_items is None:
+        deleted_items = []
 
     # Pydantic으로 변환하여 응답
     return ItemDeleteResponse(deleted_items=deleted_items)
