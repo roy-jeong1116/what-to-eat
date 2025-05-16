@@ -29,13 +29,13 @@ def extract_names_from_image(img_bytes: bytes) -> list[str]:
     user_prompt = """
 너는 식재료 및 요리 전문가야.
 이 영수증(주문목록, 결제내역 등) 이미지에서 **상품명** 텍스트만 OCR로 추출하고,
-추출된 상품명을 “일반 재료명”으로 정규화해줘.
-예시: 찌개두부 → 두부, 바나나우유 → 우유, 애호박 → 호박, 포카칩 → 과자, 꿀사과 → 사과
+추출된 상품명을 “일반 식재료명”으로 정규화해줘.
+예시: 찌개두부 → 두부, 포카칩 → 과자, 꿀사과 → 사과, 콩나물 -> 콩나물(O), 콩나물 -> 나물(X)
 최종적으로 JSON 배열(문자열 리스트) 형태로만 반환해.
 """.strip()
 
     resp = openai.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4.1",
         temperature=0,
         messages=[
             {"role":"system","content":"You are a helpful assistant."},
@@ -112,7 +112,7 @@ def classify_names(names: list[str]) -> list[dict]:
 """.strip()
 
     resp = openai.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4.1",
         temperature=0,
         messages=[
            {"role":"system","content":system},
