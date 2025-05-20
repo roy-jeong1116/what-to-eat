@@ -29,13 +29,15 @@ def extract_names_from_image(img_bytes: bytes) -> list[str]:
     user_prompt = """
 너는 식재료 및 요리 전문가야.
 이 영수증(주문목록, 결제내역 등) 이미지에서 **상품명** 텍스트만 OCR로 추출하고,
-추출된 상품명을 “일반 재료명”으로 정규화해줘.
-예시: 찌개두부 → 두부, 바나나우유 → 우유, 애호박 → 호박, 포카칩 → 과자, 꿀사과 → 사과
+추출된 상품명을 “일반 식재료명”으로 정규화해줘. 
+추가 예시: 모둠쌈채소 → 모둠쌈채소, 찌개두부 → 찌개두부, 찌개용 돈뼈 → 찌개용 돈뼈, 
+포카칩 → 과자, 꿀사과 → 사과, 손질 오징어 → 손질 오징어, 건조 오징어 → 건조 오징어, 삼겹살 → 삼겹살,
+콩나물 → 콩나물(O), 콩나물 → 나물(X)
 최종적으로 JSON 배열(문자열 리스트) 형태로만 반환해.
 """.strip()
 
     resp = openai.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4.1",
         temperature=0,
         messages=[
             {"role":"system","content":"You are a helpful assistant."},
@@ -62,8 +64,11 @@ def classify_names(names: list[str]) -> list[dict]:
 너는 식재료 및 요리 전문가야.  
 아래의 다섯 가지 **대분류** 중 하나로 `category_major_name` 를,  
 각 대분류에 속하는 **소분류** 중 하나로 `category_sub_name` 를 정확히 매핑하고,  
-유통기한은 **무조건 “n일”** 형식(예: 1달 - “30일”, 1년 - “365일”)으로만 `expiry_text`에 텍스트로 제시해.
-단, 유통기한이 없는 무기한 식품에 대해서는 `expiry_text`에 "무기한"이라고 제시해.
+해당 식품의 일반적인 유통기한은 **무조건 “n일”** 형식(예: 1달 - “30일”, 1년 - “365일”)으로만 `expiry_text`에 텍스트로 제시해. 
+그리고 대분류와 소분류 그리고 유통기한의 경우 이전에 같은 식재료에 대해서 처리한 적이 있으면 무조건 이전과 동일하게 처리를 하도록 해.
+예를 들어, "쌈무"라는 식재료에 대해서 최초로 입력이 들어갔을 때, [대분류 - 가공·저장식품, 소분류 - 가공식품, 유통기한 - 30일] 로 입력이 들어갔다면, 
+이후에 "쌈무"라는 식재료가 다시 입력되어서 저장될 때, 최초 입력과 동일하게 [대분류 - 가공·저장식품, 소분류 - 가공식품, 유통기한 - 30일]로 들어가야 해.)
+단, 유통기한이 일반적으로 없는 무기한 식품에 대해서는 `expiry_text`에 "무기한"이라고 제시해. 
 
 대분류 목록(category_major_name):
   1. 식물성
@@ -112,7 +117,7 @@ def classify_names(names: list[str]) -> list[dict]:
 """.strip()
 
     resp = openai.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4.1",
         temperature=0,
         messages=[
            {"role":"system","content":system},
