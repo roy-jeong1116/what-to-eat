@@ -71,7 +71,7 @@ def login_for_access_token(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="사용자를 찾을 수 없습니다.")
     if not pwd_context.verify(form_data.password, user.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="비밀번호가 잘못되었습니다.")
-    access_token = create_access_token(data={"sub": user.user_id})
+    access_token = create_access_token(data={"sub": str(user.user_id)})
     return user_schema.Token(
         access_token=access_token,
         token_type="bearer",
