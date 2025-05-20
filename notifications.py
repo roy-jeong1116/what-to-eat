@@ -53,7 +53,7 @@ def notify_expiring_items():
     db = SessionLocal()
     try:
         today = date.today()
-        for days in (7, 3):
+        for days in (3):
             target = today + timedelta(days=days)
             items = db.query(Item).filter(Item.expiry_date == target).all()
             for item in items:
