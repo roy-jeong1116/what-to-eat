@@ -10,6 +10,7 @@ def create_user(db: Session, user_create: UserCreate):
     db_user = User(username=user_create.username,
                    login_id=user_create.login_id,
                    password=pwd_context.hash(user_create.password1),
+                   notification = True,
                    )
     db.add(db_user)
     db.commit()

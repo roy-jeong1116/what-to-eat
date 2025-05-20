@@ -9,11 +9,12 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 
-from domain.user import user_router
-from domain.user import user_crud
+from domain.user import user_router, user_crud
 from domain.item import item_router
 from domain.qa import qa_router
 from domain.ocr.ocr_router import router as ocr_router
+
+from notifications import notify_expiring_items, router as notifications_router
 
 # 1) 스케줄러 인스턴스 생성
 scheduler = AsyncIOScheduler()
@@ -23,7 +24,7 @@ scheduler = AsyncIOScheduler()
 async def lifespan(app: FastAPI):
     # --- startup logic ---
     # 매일 오후 18:00에 알림 작업 실행
-    scheduler.add_job(notify_expiring_items, 'cron', hour=18, minute=0)
+    scheduler.add_job(notify_expiring_items, 'cron', hour=19, minute=49)
     scheduler.start()
 
     yield  # 여기서 FastAPI가 “running” 상태로 전환됩니다
@@ -53,6 +54,7 @@ app.include_router(item_router.router,   tags=["Item"])
 app.include_router(ocr_router,           tags=["OCR"])
 app.include_router(qa_router.router)
 app.include_router(category_router.router)
+app.include_router(notifications_router, tags=["Notifications"])
 
 @app.get("/mypage/{user_id}", tags=["MyPage"])
 async def get_mypage(user_id: int, db: Session = Depends(get_db)):
