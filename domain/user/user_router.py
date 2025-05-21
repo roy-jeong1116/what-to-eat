@@ -118,9 +118,7 @@ def toggle_notification(
     current_user: User = Depends(get_current_user),
 ):
     current_user.notification = enabled
-    # 끌 때는 토큰도 제거
-    if not enabled:
-        current_user.fcm_token = None
+    
     db.add(current_user)
     db.commit()
     return {"message": "Notification setting updated", "enabled": enabled}
