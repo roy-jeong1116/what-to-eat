@@ -19,7 +19,7 @@ def get_current_user(
     try:
         # JWT를 사용하여 토큰에서 사용자 정보 추출
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: int = payload.get("sub")
+        user_id: int = int(payload.get("sub"))  # ← 보통 str로 들어오니 int 변환 필요
         if user_id is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
