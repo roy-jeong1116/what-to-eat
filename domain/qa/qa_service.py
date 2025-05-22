@@ -1,9 +1,9 @@
 from sqlalchemy.orm import Session
 from domain.item.item_crud import get_items_by_user
-from domain.qa.qa_chain import get_recipe_chain
+from domain.qa.qa_chain import route_request
 
-# 체인 초기화
-recipe_chain = get_recipe_chain()
+# # 체인 초기화
+# recipe_chain = get_recipe_chain()
 
 def recommend_recipes_from_fridge(db: Session, user_id: int, user_request: str) -> str:
     # 사용자 냉장고 아이템 조회
@@ -16,10 +16,5 @@ def recommend_recipes_from_fridge(db: Session, user_id: int, user_request: str) 
     # 재료 텍스트로 변환
     ingredient_text = ", ".join(ingredients)
 
-    # 체인 실행
-    result = recipe_chain.invoke({
-        "ingredients": ingredient_text,
-        "user_request": user_request
-    })
-
-    return result.content  # AIMessage 객체 → content 문자열 추출
+    result = route_request(user_request=user_request, user_ingredients=ingredient_text)
+    return result  # AIMessage 객체 → content 문자열 추출
