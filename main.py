@@ -39,7 +39,7 @@ app = FastAPI(lifespan=lifespan)
 # 외부 도메인에서의 API 접근을 위한 보안 설정
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],        # 모든 출처에서의 요청 허용 (보안상 실제 서비스에서는 제한 필요)
+    allow_origins=["http://localhost:8080"],        # 모든 출처에서의 요청 허용 (보안상 실제 서비스에서는 제한 필요)
     allow_credentials=True,     # 쿠키 등 인증 정보 포함 요청 허용
     allow_methods=["*"],        # GET, POST, PUT, DELETE 등 모든 HTTP 메서드 허용
     allow_headers=["*"],        # 모든 요청 헤더 허용
