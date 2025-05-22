@@ -24,7 +24,7 @@ scheduler = AsyncIOScheduler()
 async def lifespan(app: FastAPI):
     # --- startup logic ---
     # 매일 오후 18:00에 알림 작업 실행
-    scheduler.add_job(notify_expiring_items, 'cron', hour=11, minute=0)
+    scheduler.add_job(notify_expiring_items, 'cron', hour=11, minute=15)
     scheduler.start()
 
     yield  # 여기서 FastAPI가 “running” 상태로 전환됩니다
