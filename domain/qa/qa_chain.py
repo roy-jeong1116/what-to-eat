@@ -53,6 +53,7 @@ def classify_input(user_request: str) -> str:
         5. 챗봇정보
         - 정의: 사용자가 챗봇의 정체, 역할, 사용법 등을 묻는 경우. 챗봇과 대화하는 방법이나 가능한 기능을 알고 싶어하는 질문.
         - 예시:
+        - ?
         - 너 뭐야?
         - 무슨 기능이 있어?
         - 어떻게 사용해?
@@ -61,10 +62,19 @@ def classify_input(user_request: str) -> str:
         - 어떤 요리를 추천해줘?
         - 사용할 수 있는 명령어 알려줘
         - 이 챗봇은 뭔가요?
+                                          
+        6. 예외
+        - 정의: 위의 어떤 분류에도 속하지 않거나, 의미 없는 말, 질문과 관련 없는 입력
+        - 예시:
+        - 오늘 날씨 뭐야
+        - 어슷썰기는 어떻게 하는거야?
+        - 졸려
+        - 음하하
+        - 라면의 유래가 뭘까
 
         ------------------------------------------------------------
         사용자의 요청을 읽고, 가장 적절한 유형 하나를 정확히 다음 중 하나로만 출력하세요:  
-        일반레시피, 요리키워드, 재료키워드, 카테고리, 챗봇정보  
+        일반레시피, 요리키워드, 재료키워드, 카테고리, 챗봇정보, 예외외
         ------------------------------------------------------------
 
         사용자 요청: "{user_request}"
@@ -269,6 +279,24 @@ def explain_app() -> str:
         무엇을 먹을지 고민될 때, 『뭐먹을냉?』이 함께할게요!
 """
 
+# 예외 에이전트
+def other(user_request: str) -> str:
+    prompt = PromptTemplate.from_template("""
+        너는 사용자의 질문에 답하는 친절한 챗봇이야. 하지만 너는 오직 요리나 식재료에 관한 질문에만 대답할 수 있어.
+
+        아래 지침을 따르세요:
+
+        1. 사용자의 질문이 요리나 식재료에 관한 이야기기(예: 유통기한, 조리법, 손질법, 보관법 등)이면 간단하고 정확하게 답변해줘.
+        2. 질문이 요리나 식재료와 관련 없는 경우(예: 날씨, 감정 표현, 일상 대화 등)에는 아래 문장을 그대로 출력해:
+        "저는 [뭐먹을냉?] 입니다. 요리나 식재료와 관련된 이야기만 해주세요."
+
+        사용자 질문: "{user_request}"
+
+        답변:
+    """)
+    chain = prompt | llm
+    return chain.invoke({"user_request": user_request}).content.strip()
+
 
 #  전체 요청 라우팅 함수
 def route_request(user_request: str, user_ingredients: str) -> str:
@@ -286,4 +314,4 @@ def route_request(user_request: str, user_ingredients: str) -> str:
     elif category == "챗봇정보":
         return explain_app()
     else: # 예외
-        return explain_app()
+        return other(user_request)
