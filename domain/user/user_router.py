@@ -41,6 +41,8 @@ def user_create(
     if user_crud.get_existing_login_id(db, user_create=_user_create):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="이미 존재하는 아이디입니다.")
     user_crud.create_user(db, user_create=_user_create)
+    if _user_create.password1 != _user_create.password2:
+        raise HTTPException(status_code=400, detail="비밀번호가 일치하지 않습니다.")
 
 
 # 회원탈퇴
