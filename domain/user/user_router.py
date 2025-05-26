@@ -175,6 +175,6 @@ def update_password(
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="사용자를 찾을 수 없습니다.")
     if not pwd_context.verify(request.password, user.password):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="비밀번호를 확인하세요.")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="현재 비밀번호가 틀렸습니다.")
     update_user_password(db, user_id=user_id, new_password=request.new_password)
     return {"message": "비밀번호가 성공적으로 변경되었습니다."}
